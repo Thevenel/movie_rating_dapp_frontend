@@ -1,0 +1,57 @@
+<div class="space-y-6">
+
+  <!-- Add Movie Form -->
+  <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+    <input
+      [(ngModel)]="title"
+      placeholder="Titre du film"
+      class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    <input
+      type="number"
+      [(ngModel)]="year"
+      placeholder="Année"
+      class="border border-gray-300 rounded px-3 py-2 w-full sm:w-32 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+    <button
+      (click)="addMovie()"
+      class="bg-blue-500 text-white font-semibold px-4 py-2 rounded hover:bg-blue-600 transition"
+    >
+      Ajouter
+    </button>
+  </div>
+
+  <!-- Movie Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (movie of movies(); track movie.id) {
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-2">{{ movie.title }} ({{ movie.year }})</h2>
+
+        <p class="text-gray-600 mb-2">
+          ⭐ Moyenne : 
+          {{ movie.ratingCount > 0 ? (movie.totalRating / movie.ratingCount).toFixed(1) : 'Aucune' }} / 5
+          ({{ movie.ratingCount }} votes)
+        </p>
+
+        <div class="flex items-center gap-2">
+          <select #userRating class="border rounded px-2 py-1">
+            @for (r of [1,2,3,4,5]; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+
+          <button
+            (click)="rateMovie(movie.id, +userRating.value)"
+            [disabled]="!movie.canRate"
+            [class.bg-gray-400]="!movie.canRate"
+            [class.bg-green-500]="movie.canRate"
+            class="text-white font-semibold px-3 py-1 rounded transition"
+          >
+            {{ movie.canRate ? 'Noter' : 'Déjà noté' }}
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>
