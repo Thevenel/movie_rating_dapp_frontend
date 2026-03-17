@@ -48,6 +48,14 @@ async init() {
 
   const signer = await this.provider.getSigner();
   this.contract = new ethers.Contract(environment.contractAddress, MovieRatingJson.abi, signer);
+
+  console.log("Network Name:", network.name);
+  console.log("Network Chain ID:", network.chainId);
+  console.log("Network Plugins:", network.plugins);
+  console.log("Contract:", this.contract.target);
+
+  const code = await this.provider.getCode(this.contract.target);
+  console.log("Code at address:", code);
 }
 
 
