@@ -34,7 +34,7 @@ export class MovieListComponent {
   }
 
   async rateMovie(index: number, ratingValue: number) {
-    await this.movieService.rateMovie(index, this.rating);
+    await this.movieService.rateMovie(index, ratingValue);
     await this.loadMovies();
   }
 }

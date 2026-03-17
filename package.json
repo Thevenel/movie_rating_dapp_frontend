@@ -7,8 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build:prod": "ng build --build-target=production --base-href /movie_rating_dapp_frontend/",
-    "deploy": "npx angular-cli-ghpages --dir=dist/movie_rating_dapp_frontend/browser"
+    "build:prod": "ng build --configuration production --base-href /movie_rating_dapp_frontend/",
+  "deploy": "npx angular-cli-ghpages --base-href=/movie_rating_dapp_frontend/"
   },
   "private": true,
   "packageManager": "npm@11.11.1",

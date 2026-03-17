@@ -10,6 +10,7 @@ export type Movie = {
   totalRating: number;
   ratingCount: number;
   canRate? : boolean;
+  userRating? : number;
 };
 
 @Injectable({
@@ -56,6 +57,7 @@ async init() {
 
   const code = await this.provider.getCode(this.contract.target);
   console.log("Code at address:", code);
+
 }
 
 
@@ -92,11 +94,33 @@ async init() {
     await tx.wait();
   }
 
+  // async rateMovie(index: number, rating: number) {
+  //   await this.waitForInit();
+  //   const tx = await this.contract['rateMovie'](index, rating);
+  //   await tx.wait();
+  // }
+
   async rateMovie(index: number, rating: number) {
-    await this.waitForInit();
+  await this.waitForInit();
+  
+  
+  // DEBUG LOGS
+  console.log("--- Attempting to Rate Movie ---");
+  console.log("Movie Index (ID):", index);
+  console.log("Rating Value being sent:", rating);
+  console.log("Type of Rating:", typeof rating);
+
+
+  try {
     const tx = await this.contract['rateMovie'](index, rating);
+    console.log("Transaction sent! Hash:", tx.hash);
+    
     await tx.wait();
+    console.log("Transaction Confirmed!");
+  } catch (error) {
+    console.error("Transaction Failed:", error);
   }
+}
 
 
 // async getMovies(): Promise<Movie[]> {
@@ -138,12 +162,13 @@ async getMovies(): Promise<Movie[]> {
     const alreadyRated = await readOnlyContract['hasRated'](index, userAddress);
     
     return {
-      id: Number(m.id ?? index),
+      id: Number(m.id),
       title: m.title,
       year: Number(m.year),
       totalRating: Number(m.totalRating),
       ratingCount: Number(m.ratingCount),
-      canRate: !alreadyRated
+      canRate: !alreadyRated,
+      userRating: 1
     };
   }));
 }

@@ -34,22 +34,25 @@
         </p>
 
         <div class="flex items-center gap-2">
-          <select #userRating class="border rounded px-2 py-1">
-            @for (r of [1,2,3,4,5]; track r) {
-              <option [value]="r">{{ r }}</option>
-            }
-          </select>
+  <select 
+    [(ngModel)]="movie.userRating"
+    class="border rounded px-2 py-1"
+  >
+    @for (r of [1,2,3,4,5]; track r) {
+      <option [value]="r" [selected]="r === 1">{{ r }}</option>
+    }
+  </select>
 
-          <button
-            (click)="rateMovie(movie.id, +userRating.value)"
-            [disabled]="!movie.canRate"
-            [class.bg-gray-400]="!movie.canRate"
-            [class.bg-green-500]="movie.canRate"
-            class="text-white font-semibold px-3 py-1 rounded transition"
-          >
-            {{ movie.canRate ? 'Noter' : 'Déjà noté' }}
-          </button>
-        </div>
+  <button
+    (click)="rateMovie(movie.id, movie.userRating || 1)"
+    [disabled]="!movie.canRate"
+    [class.bg-gray-400]="!movie.canRate"
+    [class.bg-green-500]="movie.canRate"
+    class="text-white font-semibold px-3 py-1 rounded transition"
+  >
+    {{ movie.canRate ? 'Noter' : 'Déjà noté' }}
+  </button>
+</div>
       </div>
     }
   </div>
