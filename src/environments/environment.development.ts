@@ -1,6 +1,6 @@
 export const environment = {
     production:false,
-    contractAddress: '0x8CBb9530682907204F97eC1716Da01ae7D3AE76A',
+    contractAddress: '0x9cc5fe35699724AcFeD4d96cDcbED9b668A79CF5',
     chainId: '0x539',
     ownerAddress:''
 };
