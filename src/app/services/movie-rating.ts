@@ -7,6 +7,7 @@ export type Movie = {
   id: number;
   title: string;
   year: number;
+  genre: string;
   totalRating: number;
   ratingCount: number;
   canRate? : boolean;
@@ -19,6 +20,12 @@ export class MovieRatingService {
   private provider!: ethers.BrowserProvider;
   private contract!: ethers.Contract;
 
+  readonly genres = [
+    'Action','Comedy','Drama','Horror','SciFi','Romance','Thriller','Documentary',
+    'Animation','Fantasy','Mystery','Adventure','Musical','Western','Historical',
+    'War','Crime','Family','Sports','Biography','Other'
+  ];
+
   constructor() {
     this.init();
   }
@@ -26,11 +33,13 @@ export class MovieRatingService {
   
 async init() {
   if (!(window as any).ethereum) return alert('Please install MetaMask');
+  await (window as any).ethereum.request({
+    method: 'eth_requestAccounts',
+  });
 
   this.provider = new ethers.BrowserProvider((window as any).ethereum);
   const network = await this.provider.getNetwork();
-  
-  // Convert environment hex to BigInt for comparison
+
   const expectedChainId = BigInt(environment.chainId);
 
   if (network.chainId !== expectedChainId) {
@@ -39,7 +48,6 @@ async init() {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: environment.chainId }], 
       });
-      // Reload the page after switching to reset the state
       window.location.reload();
     } catch (err) {
       alert(`Please switch MetaMask to ${environment.production ? 'Sepolia' : 'Ganache'}`);
@@ -65,9 +73,13 @@ async init() {
     }
   }
 
-  async addMovie(title: string, year: number) {
+  async addMovie(title: string, year: number, genre:string) {
     await this.waitForInit();
-    const tx = await this.contract['addMovie'](title, year);
+    const genreIndex = this.genres.indexOf(genre);
+    if (genreIndex === -1) {
+       new Error("Invalid genre selected");
+    }
+    const tx = await this.contract['addMovie'](title, year, genreIndex);
     await tx.wait();
   }
 
@@ -81,36 +93,57 @@ async init() {
   } catch (error) {
     console.error("Transaction Failed:", error);
   }
+
+}
+
+async removeMovie(movieId: number) {
+  await this.waitForInit();
+  const tx = await this.contract['removeMovie'](movieId);
+  await tx.wait();
 }
 
 async getMovies(): Promise<Movie[]> {
   await this.waitForInit();
-
-  // FIX 1: Explicitly use the provider for "View" calls
   const readOnlyContract = new ethers.Contract(
     environment.contractAddress, 
     MovieRatingJson.abi, 
-    this.provider // Use provider, not signer
+    this.provider
   );
 
   const raw: any[] = await readOnlyContract['getMovies']();
-  
-  // FIX 2: Get the user address once outside the loop
+
   const signer = await this.provider.getSigner();
   const userAddress = await signer.getAddress();
 
-  return Promise.all(raw.map(async (m, index) => {
-    // FIX 3: Ensure index is handled as a number
-    const alreadyRated = await readOnlyContract['hasRated'](index, userAddress);
+  return Promise.all(raw.map(async (m) => {
+    const movieId = Number(m.id);
+    const alreadyRated = await readOnlyContract['hasRated'](movieId, userAddress);
     
     return {
-      id: Number(m.id),
+      id: movieId,
       title: m.title,
       year: Number(m.year),
+      genre: this.genres[m.genre] ?? "Unknown",
       totalRating: Number(m.totalRating),
       ratingCount: Number(m.ratingCount),
       canRate: !alreadyRated
     };
   }));
+}
+async getSignerAddress(): Promise<string> {
+  const signer = await this.provider.getSigner();
+  return signer.getAddress();
+}
+
+async getOwnerAddress(): Promise<string> {
+  await this.waitForInit();
+
+  const readOnlyContract = new ethers.Contract(
+    environment.contractAddress,
+    MovieRatingJson.abi,
+    this.provider
+  );
+
+  return await readOnlyContract['owner']();
 }
 }
