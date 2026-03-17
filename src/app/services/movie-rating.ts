@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ethers } from 'ethers';
 import MovieRatingJson from '../../assets/MovieRating.json';
+import { environment } from '../../environments/environment';
 
 export type Movie = {
   id: number;
@@ -29,7 +30,7 @@ async init() {
     this.provider = new ethers.BrowserProvider((window as any).ethereum);
     await this.provider.send("eth_requestAccounts", []); // prompt MetaMask
     const signer = await this.provider.getSigner();
-    const contractAddress = '0xbB263265949781E3de2FA825aFBfCa7562abA500'; // <-- UPDATE THIS
+    const contractAddress = environment.contractAddress; // <-- UPDATE THIS
     this.contract = new ethers.Contract(contractAddress, MovieRatingJson.abi, signer);
   } else {
     alert('Please install MetaMask!');
