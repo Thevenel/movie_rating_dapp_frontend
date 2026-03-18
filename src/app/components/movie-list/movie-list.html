@@ -1,134 +1,142 @@
-<div class="space-y-6">
-  @if (errorMessage()) {
-    <div class="bg-red-100 text-red-700 p-2 rounded mb-4">
-      {{ errorMessage() }}
+<div class="min-h-screen bg-[#141414] text-white font-sans antialiased selection:bg-red-600">
+  
+  <header class="flex items-center justify-between px-6 py-4 bg-gradient-to-b from-black/90 to-transparent sticky top-0 z-50">
+    <div class="flex items-center gap-8">
+      <h1 class="text-red-600 text-3xl font-extrabold tracking-tighter uppercase cursor-pointer">Web3flix</h1>
+      <nav class="hidden md:flex gap-6 text-sm font-medium text-gray-300">
+        <span (click)="setCategory(null)" class="hover:text-white cursor-pointer transition" [class.text-white]="!selectedCategory()">Browse All</span>
+      </nav>
     </div>
-  }
-
-  @if (isOwner()) {
-    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
-      <input
-        [(ngModel)]="title"
-        placeholder="Titre du film"
-        class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <input
-        type="number"
-        [(ngModel)]="year"
-        placeholder="Année"
-        class="border border-gray-300 rounded px-3 py-2 w-full sm:w-32 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-      <select
-        [(ngModel)]="selectedGenre"
-        class="border border-gray-300 rounded px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      >
-        <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
-      </select>
-      <button
-        (click)="addMovie()"
-        class="bg-blue-500 text-white font-semibold px-4 py-2 rounded hover:bg-blue-600 transition flex items-center gap-2"
-      >
-        <span>Ajouter</span>
-      </button>
-    </div>
-  }
-
-  <input
-    type="text"
-    placeholder="Search movies..."
-    (input)="onSearchChange($event.target.value)"
-    class="border border-gray-300 rounded px-3 py-2 w-full mb-4"
-  />
-
-  <div class="flex flex-col md:flex-row gap-6">
-    <div class="w-full md:w-48 shrink-0">
-      <h3 class="font-bold mb-2">Genres</h3>
-      <div (click)="setCategory(null)" 
-        [class.bg-blue-200]="selectedCategory() === null"
-        class="cursor-pointer p-2 rounded hover:bg-gray-200 transition">
-        All
+    
+    <div class="flex items-center gap-6">
+      <div class="relative group">
+        <input
+          type="text"
+          placeholder="Titles, genres..."
+          (input)="onSearchChange($event.target.value)"
+          class="bg-black/40 border border-white/20 rounded-sm px-9 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-white w-40 md:w-64 transition-all placeholder:text-gray-500"
+        />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
       </div>
-      <div
-        *ngFor="let g of genres"
-        (click)="setCategory(g)"
-        [class.bg-blue-200]="selectedCategory() === g"
-        class="cursor-pointer p-2 rounded hover:bg-gray-200 transition"
-      >
-        {{ g }}
+
+      <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-wider">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        Connected
       </div>
     </div>
+  </header>
 
-    @if (filteredMovies().length === 0) {
-    <div class="text-center py-12 text-gray-400 mx-auto">
-      No movies found 🎬
-    </div>
-  }
-    <div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        @for (movie of filteredMovies(); track movie.id) {
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 transition-all hover:shadow-md">
-            <div>
-              <h2 class="text-lg font-bold mb-1 leading-tight text-gray-800">{{ movie.title }} ({{ movie.year }})</h2>
-              <p class="text-xs font-semibold uppercase tracking-wider text-blue-500 mb-3">{{ movie.genre }}</p>
-              <p class="text-sm text-gray-600 mb-4 flex items-center gap-1">
-                  <span class="text-yellow-500">⭐</span>
-                  <span class="font-bold">
-                    {{ movie.ratingCount > 0 ? (movie.totalRating / movie.ratingCount).toFixed(1) : '—' }}
-                  </span>
-                  <span class="text-gray-400 text-xs">({{ movie.ratingCount }} votes)</span>
-              </p>
-          </div>
+  <main class="px-6 md:px-12 py-8 space-y-12">
 
-        <div class="flex items-center justify-between pt-3 border-t border-gray-50 mt-auto">
-          <div class="flex items-center gap-1.5">
-            <select #userRating class="border border-gray-200 rounded px-1 py-1 text-sm focus:ring-1 focus:ring-blue-400 outline-none bg-gray-50">
-              @for (r of [1, 2, 3, 4, 5]; track r) {
-                <option [value]="r">{{ r }}</option>
-              }
-            </select>
-
-            <button
-              (click)="rateMovie(movie.id, +userRating.value)"
-              [disabled]="!movie.canRate"
-              [title]="movie.canRate ? 'Voter' : 'Déjà noté'"
-              [class.bg-gray-100]="!movie.canRate"
-              [class.text-gray-300]="!movie.canRate"
-              [class.bg-green-500]="movie.canRate"
-              [class.text-white]="movie.canRate"
-              [class.hover:bg-green-600]="movie.canRate"
-              class="p-1.5 rounded-md transition-all shadow-sm active:scale-95"
-            >
-              @if (movie.canRate) {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-              }
-            </button>
-          </div>
-
-          @if (isOwner()) {
-            <button
-              (click)="removeMovie(movie.id)"
-              title="Supprimer le film"
-              class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all active:scale-95"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          }
-        </div>
+    @if (errorMessage()) {
+      <div class="bg-red-600/20 border border-red-600 text-red-100 p-4 rounded-md flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+        <p class="text-sm font-medium">{{ errorMessage() }}</p>
+        <button (click)="errorMessage.set(null)" class="text-white hover:scale-110">✕</button>
       </div>
     }
+
+    @if (isOwner()) {
+      <section class="animate-in fade-in duration-700">
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Contract Admin Controls</h2>
+        <div class="bg-[#181818] p-1 rounded-lg flex flex-col md:flex-row gap-1 shadow-2xl border border-white/5">
+          <input [(ngModel)]="title" placeholder="Movie Title" class="bg-[#232323] border-none rounded-l-md md:rounded-l-sm p-3 flex-1 focus:ring-1 focus:ring-red-600 outline-none" />
+          <input type="number" [(ngModel)]="year" placeholder="Year" class="bg-[#232323] border-none p-3 w-full md:w-28 focus:ring-1 focus:ring-red-600 outline-none" />
+          <select [(ngModel)]="selectedGenre" class="bg-[#232323] border-none p-3 w-full md:w-44 focus:ring-1 focus:ring-red-600 outline-none">
+            <option *ngFor="let g of genres" [value]="g">{{ g }}</option>
+          </select>
+          <button (click)="addMovie()" class="bg-red-600 text-white px-8 py-3 rounded-r-md md:rounded-r-sm font-bold hover:bg-red-700 active:scale-95 transition-all">
+            ADD MOVIE
+          </button>
+        </div>
+      </section>
+    }
+
+    <section>
+      <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+        <button 
+          (click)="setCategory(null)"
+          [class]="selectedCategory() === null ? 'bg-white text-black' : 'bg-[#2F2F2F]/50 text-white hover:bg-[#3f3f3f]'"
+          class="px-6 py-2 rounded-sm text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap">
+          All Genres
+        </button>
+        <button 
+          *ngFor="let g of genres"
+          (click)="setCategory(g)"
+          [class]="selectedCategory() === g ? 'bg-white text-black' : 'bg-[#2F2F2F]/50 text-white hover:bg-[#3f3f3f]'"
+          class="px-6 py-2 rounded-sm text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap">
+          {{ g }}
+        </button>
       </div>
-    </div>
+    </section>
 
+    <section>
+      <h2 class="text-2xl font-bold mb-6 tracking-tight flex items-center gap-3">
+        {{ selectedCategory() || 'Trending on Chain' }}
+        <span class="h-px flex-1 bg-white/10"></span>
+      </h2>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-12">
+        @for (movie of filteredMovies(); track movie.id) {
+          <div class="group relative transition-all duration-400 ease-out hover:scale-110 hover:z-50">
+            
+            <div class="aspect-[2/3] bg-gradient-to-br from-[#2F2F2F] to-[#1a1a1a] rounded-md overflow-hidden shadow-xl relative border border-white/5">
+              
+              <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                <span class="text-[10px] text-red-600 font-black uppercase tracking-tighter mb-1 opacity-60">Netflix Original</span>
+                <h3 class="text-sm font-bold leading-tight line-clamp-2 px-2">{{ movie.title }}</h3>
+                <span class="text-[10px] text-gray-500 mt-2">{{ movie.year }}</span>
+              </div>
+              
+              <div class="absolute inset-0 bg-black/90 opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                
+                <div class="mb-auto flex justify-between">
+                   <div class="bg-white rounded-full p-2 text-black shadow-lg">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 22v-20l18 10-18 10z"/></svg>
+                   </div>
+                   @if (isOwner()) {
+                    <button (click)="removeMovie(movie.id)" class="text-gray-500 hover:text-red-500 p-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  }
+                </div>
 
-  </div>
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-[10px] font-bold">
+                    <span class="text-green-500">
+                      {{ movie.ratingCount > 0 ? (movie.totalRating / movie.ratingCount * 20).toFixed(0) : '0' }}% Match
+                    </span>
+                    <span class="text-gray-400">{{ movie.genre }}</span>
+                  </div>
 
-  
+                  <div class="flex items-center gap-2 pt-2">
+                    <select #userRating class="bg-[#181818] border border-white/20 rounded-sm text-[10px] py-1 px-1 focus:outline-none flex-1">
+                      @for (r of [1, 2, 3, 4, 5]; track r) { <option [value]="r">{{ r }} Stars</option> }
+                    </select>
+
+                    <button 
+                      (click)="rateMovie(movie.id, +userRating.value)"
+                      [disabled]="!movie.canRate"
+                      [class.bg-white]="movie.canRate"
+                      [class.text-black]="movie.canRate"
+                      [class.bg-gray-700]="!movie.canRate"
+                      [class.text-gray-400]="!movie.canRate"
+                      class="px-2 py-1 rounded-sm text-[9px] font-black uppercase tracking-tighter transition active:scale-90">
+                      {{ movie.canRate ? 'Rate' : 'Rated' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-2 group-hover:opacity-0 transition-opacity">
+               <p class="text-[11px] font-bold line-clamp-1 uppercase tracking-wider text-gray-400">{{ movie.title }}</p>
+               <p class="text-[9px] text-gray-600 font-bold uppercase tracking-tighter">{{ movie.genre }} • {{ movie.year }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  </main>
 </div>
