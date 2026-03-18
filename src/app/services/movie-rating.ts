@@ -19,6 +19,7 @@ export type Movie = {
 export class MovieRatingService {
   private provider!: ethers.BrowserProvider;
   private contract!: ethers.Contract;
+  private initPromise: Promise<void>;
 
   readonly genres = [
     'Action','Comedy','Drama','Horror','SciFi','Romance','Thriller','Documentary',
@@ -26,10 +27,11 @@ export class MovieRatingService {
     'War','Crime','Family','Sports','Biography','Other'
   ];
 
-  constructor() {
-    this.init();
-  }
+  
 
+constructor() {
+  this.initPromise = this.init();
+}
   
 async init() {
   if (!(window as any).ethereum) return alert('Please install MetaMask');
@@ -73,11 +75,13 @@ async init() {
     }
   }
 
+  
+
   async addMovie(title: string, year: number, genre:string) {
-    await this.waitForInit();
+    await this.initPromise;
     const genreIndex = this.genres.indexOf(genre);
     if (genreIndex === -1) {
-       new Error("Invalid genre selected");
+       throw new Error("Invalid genre selected");
     }
     const tx = await this.contract['addMovie'](title, year, genreIndex);
     await tx.wait();
@@ -134,6 +138,7 @@ async getSignerAddress(): Promise<string> {
   const signer = await this.provider.getSigner();
   return signer.getAddress();
 }
+
 
 async getOwnerAddress(): Promise<string> {
   await this.waitForInit();

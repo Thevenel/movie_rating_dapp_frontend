@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MovieRatingService, Movie } from '../../services/movie-rating';
-import { environment } from '../../../environments/environment';
+
 
 @Component({
   selector: 'app-movie-list',
@@ -19,6 +19,12 @@ export class MovieListComponent {
   rating = 1;
   selectedGenre = '';
   isOwner = signal(false);
+
+  errorMessage = signal<string | null>(null);
+
+  selectedCategory = signal<string | null>(null);
+  searchTerm = signal('');
+
   constructor(private movieService: MovieRatingService) {}
 
 
@@ -28,14 +34,40 @@ export class MovieListComponent {
     await this.loadMovies();
     await this.checkOwner();
 
-  if ((window as any).ethereum) {
-    (window as any).ethereum.on('accountsChanged', async () => {
-      this.isOwner.set(false)
+    
+
+  // if ((window as any).ethereum) {
+  //   (window as any).ethereum.on('accountsChanged', async () => {
+  //     this.isOwner.set(false)
+  //     await this.checkOwner();
+  //     await this.loadMovies();
+  //   });
+  // }
+
+  }
+  
+  ngOnDestroy() {
+  if ((window as any).ethereum?.removeListener) {
+    (window as any).ethereum.removeListener('accountsChanged', this.handleAccountsChanged);
+  }
+}
+
+      handleAccountsChanged = async () => {
+      this.isOwner.set(false);
       await this.checkOwner();
       await this.loadMovies();
-    });
-  }
-  }
+    };
+
+    
+    setCategory(category: string | null) {
+      this.selectedCategory.set(category);
+      this.updateFilteredMovies();
+    }
+
+    onSearchChange(value: string) {
+      this.searchTerm.set(value);
+      this.updateFilteredMovies();
+    }
 
   async checkOwner() {
   const signer = await this.movieService.getSignerAddress();
@@ -47,6 +79,7 @@ export class MovieListComponent {
 
   async loadMovies() {
     this.movies.set(await this.movieService.getMovies());
+    this.updateFilteredMovies();
   }
 
   async addMovie() {
@@ -59,8 +92,9 @@ export class MovieListComponent {
     const isOwner = signer.toLowerCase() === owner.toLowerCase();
 
     if (!isOwner) {
-    alert("❌ Only the contract owner can add movies.\n\n👉 Please switch account in MetaMask.");
+    this.errorMessage.set("❌ Only the contract owner can add movies.\n\n👉 Please switch account in MetaMask.");
     return;
+    
     
     }
     try {
@@ -74,6 +108,28 @@ export class MovieListComponent {
       console.error(err);
       alert("❌ Transaction failed");
     }
+  }
+
+  filteredMovies = signal<Movie[]>([]);
+
+  updateFilteredMovies() {
+    const movies = this.movies();
+
+    const category = this.selectedCategory();
+    const search = this.searchTerm().toLowerCase();
+
+    const filtered = movies.filter(movie => {
+      const matchCategory = !category || movie.genre === category;
+
+      const matchSearch =
+        !search ||
+        movie.title.toLowerCase().includes(search) ||
+        movie.genre.toLowerCase().includes(search);
+
+      return matchCategory && matchSearch;
+    });
+
+    this.filteredMovies.set(filtered);
   }
 
   async rateMovie(index: number, ratingValue: number) {
